@@ -3,7 +3,6 @@ package com.vxplore.jpcprinttest
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
@@ -12,15 +11,19 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import coil.compose.rememberAsyncImagePainter
 import com.caysn.autoreplyprint.AutoReplyPrint
 import com.sun.jna.Pointer
 import com.sun.jna.ptr.IntByReference
@@ -62,6 +65,25 @@ class MainActivity : ComponentActivity(), AutoReplyPrint.CP_OnPortOpenedEvent_Ca
                                 Text(text = "Print Page")
                             }
                         }
+
+//                        Card(
+//                            modifier = Modifier.size(200.dp),
+//                            shape = CircleShape,
+//                            elevation = 2.dp
+//                        ) {
+//                            Image(
+//                               //painterResource(R.drawable.test_pdf_img),
+//                                //  painter = rememberAsyncImagePainter(takeScreenshot()),
+//                                //painterResource(takeScreenshot()),
+//                                bitmap = takeScreenshot().asImageBitmap(),
+//                                //AsyncImage(model = bitmap, ...)
+//                                contentDescription = "",
+//                                contentScale = ContentScale.Crop,
+//                                modifier = Modifier.fillMaxSize()
+//                            )
+//                        }
+
+
                     }
                 }
             }
@@ -69,43 +91,69 @@ class MainActivity : ComponentActivity(), AutoReplyPrint.CP_OnPortOpenedEvent_Ca
     }
 
     private fun print() {
-        val paperWidth = 384
-        val bitmap = getBitmapFromImage(this, R.drawable.test_pdf_img)
-        if (bitmap == null || bitmap.width == 0 || bitmap.height == 0) return
-
-        var printwidth = 384
-        val width_mm = IntByReference()
-        val height_mm = IntByReference()
-        val dots_per_mm = IntByReference()
-        if (AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterResolutionInfo(
-                h,
-                width_mm,
-                height_mm,
-                dots_per_mm
-            )
-        ) {
-            printwidth = width_mm.value * dots_per_mm.value
-        }
-        //val converted = TestUtils.scaleImageToWidth(bitmap, printwidth)
-
-        //val bitmapImage = BitmapFactory.decodeFile("Your path")
-        val nh = (bitmap.height * (420.0 / bitmap.width)).toInt()
-        val scaled = Bitmap.createScaledBitmap(bitmap, 420, nh, true)
-      //  your_imageview.setImageBitmap(scaled)
 
 
-        val result =
-            AutoReplyPrint.CP_Pos_PrintRasterImageFromData_Helper.PrintRasterImageFromBitmap(
-                h,
-                scaled.width,
-                scaled.height,
-                scaled,
-                AutoReplyPrint.CP_ImageBinarizationMethod_ErrorDiffusion,
-                AutoReplyPrint.CP_ImageCompressionMethod_None
-            )
-        if (!result) TestUtils.showMessageOnUiThread(this, "Write failed")
+            try {
+                val paperWidth = 384
+                val v1 = window.decorView.rootView
+                v1.isDrawingCacheEnabled = true
+                val bitmap = Bitmap.createBitmap(v1.drawingCache)
+                v1.isDrawingCacheEnabled = false
+                //val bitmap = getBitmapFromImage(this, R.drawable.test_pdf_img)
+                if (bitmap == null || bitmap.width == 0 || bitmap.height == 0) return
 
-        AutoReplyPrint.INSTANCE.CP_Pos_Beep(h, 1, 500)
+                var printwidth = 384
+                val width_mm = IntByReference()
+                val height_mm = IntByReference()
+                val dots_per_mm = IntByReference()
+                if (AutoReplyPrint.INSTANCE.CP_Printer_GetPrinterResolutionInfo(
+                        h,
+                        width_mm,
+                        height_mm,
+                        dots_per_mm
+                    )
+                ) {
+                    printwidth = width_mm.value * dots_per_mm.value
+                }
+                //val converted = TestUtils.scaleImageToWidth(bitmap, printwidth)
+
+                //val bitmapImage = BitmapFactory.decodeFile("Your path")
+                val nh = (bitmap.height * (420.0 / bitmap.width)).toInt()
+                val scaled = Bitmap.createScaledBitmap(bitmap, 420, nh, true)
+                //  your_imageview.setImageBitmap(scaled)
+//-----------------------------------------
+
+//                Bundle data = getIntent().getExtras();
+//                person_object = data.getParcelable("person_object");
+//                // getPhoto() function returns a Base64 String
+//                byte[] decodedString = Base64.decode(person_object.getPhoto(), Base64.DEFAULT);
+//
+//                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+//                user_image.setImageBitmap(decodedByte);
+
+//-----------------------------------------
+
+                val result =
+                    AutoReplyPrint.CP_Pos_PrintRasterImageFromData_Helper.PrintRasterImageFromBitmap(
+                        h,
+                        scaled.width,
+                        scaled.height,
+                        scaled,
+                        AutoReplyPrint.CP_ImageBinarizationMethod_ErrorDiffusion,
+                        AutoReplyPrint.CP_ImageCompressionMethod_None
+                    )
+                if (!result) TestUtils.showMessageOnUiThread(this, "Write failed")
+
+                AutoReplyPrint.INSTANCE.CP_Pos_Beep(h, 1, 500)
+
+            } catch (e: Throwable) {
+                // Several error may come out with file handling or DOM
+                e.printStackTrace()
+            }
+
+
+
+
 
     }
 
@@ -176,4 +224,22 @@ class MainActivity : ComponentActivity(), AutoReplyPrint.CP_OnPortOpenedEvent_Ca
         // returning our bitmap.
         return bit
     }
+
+    private fun takeScreenshot() : Bitmap {
+//        try {
+//            // create bitmap screen capture
+//
+//        } catch (e: Throwable) {
+//            // Several error may come out with file handling or DOM
+//            e.printStackTrace()
+//        }
+
+        val v1 = window.decorView.rootView
+        v1.isDrawingCacheEnabled = true
+        val bitmap = Bitmap.createBitmap(v1.drawingCache)
+        v1.isDrawingCacheEnabled = false
+        return bitmap
+    }
+
+
 }
