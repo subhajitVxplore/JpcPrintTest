@@ -125,7 +125,7 @@ internal object TestUtils {
         val scaleWidth = w.toFloat() / bitmapWidth
         val matrix = Matrix()
         matrix.postScale(scaleWidth, scaleWidth)
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmapWidth, bitmapHeight, matrix, false)
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmapWidth, bitmapHeight, matrix, true)
     }
 
     fun getResizedBitmap(bm: Bitmap, newWidth: Int, newHeight: Int): Bitmap? {
